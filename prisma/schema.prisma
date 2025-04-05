@@ -1,0 +1,128 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int        @id @default(autoincrement())
+  nickname      String     @unique
+  password_hash String
+  password_changed Boolean @default(false)
+  roles         RoleUser[]
+  tasks         Task[]
+  teams         UserTeam[]
+}
+
+model Role {
+  id    Int       @id @default(autoincrement())
+  name  RoleEnum  @unique
+  users RoleUser[]
+}
+
+model RoleUser {
+  id_user Int
+  id_role Int
+
+  user User @relation(fields: [id_user], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [id_role], references: [id], onDelete: Cascade)
+
+  @@id([id_user, id_role]) 
+}
+
+model Project {
+  id               Int       @id @default(autoincrement())
+  name             String
+  status           ProjectStatus @default(Active)
+  payment_status   PaymentStatus @default(Unpaid)
+  subscription_end DateTime?
+  wireframe_link   String?
+  meetings         Meeting[]
+  tasks            Task[]
+  teams            Team[]
+}
+
+model Meeting {
+  id          Int      @id @default(autoincrement())
+  project_id  Int
+  meeting_date DateTime
+  description String?
+  
+  project     Project  @relation(fields: [project_id], references: [id])
+}
+
+model Task {
+  id          Int       @id @default(autoincrement())
+  project_id  Int
+  user_id     Int
+  title       String
+  description String?
+  priority    Priority  @default(Medium)
+  status      TaskStatus @default(ToDo)
+  
+  project     Project   @relation(fields: [project_id], references: [id])
+  user        User      @relation(fields: [user_id], references: [id])
+}
+
+model Team {
+  id         Int        @id @default(autoincrement())
+  project_id Int?
+  team_name  String
+  
+  project    Project?    @relation(fields: [project_id], references: [id])
+  members UserTeam[]
+
+}
+
+model UserTeam {
+  team_id    Int
+  user_id    Int
+  role       TeamRole
+  
+  team       Team      @relation(fields: [team_id], references: [id])
+  user       User      @relation(fields: [user_id], references: [id])
+  
+  @@id([team_id, user_id])
+}
+
+enum RoleEnum {
+  PM
+  Designer
+  Developer
+  Admin
+}
+
+enum ProjectStatus {
+  Active
+  Archived
+  Closed
+}
+
+enum PaymentStatus {
+  Paid
+  Unpaid
+}
+
+enum Priority {
+  Low
+  Medium
+  High
+}
+
+enum TaskStatus {
+  ToDo
+  InProgress
+  CodeReview
+  Deprecated
+  Done
+}
+
+enum TeamRole {
+  PM
+  Designer
+  Developer
+}
+
