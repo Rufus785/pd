@@ -9,8 +9,8 @@
 :root {
   --primary-color: #faca2e;
   --eye-pupil-color: #050505;
-  --bg-color: #000;
-  --text-color: #fff;
+  --bg-color: #fff;
+  --text-color: #000;
   --fs-heading: 36px;
   --fs-text: 26px;
   --fs-button: 18px;
