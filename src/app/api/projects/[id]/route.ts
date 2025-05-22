@@ -3,7 +3,6 @@ import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
-// GET project by ID
 export async function GET(
   req: Request,
   { params }: { params: { id: string } }

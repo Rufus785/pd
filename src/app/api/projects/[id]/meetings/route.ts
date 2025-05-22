@@ -100,6 +100,7 @@ export async function POST(
 
     const data = await req.json();
 
+    // Validate required fields
     if (!data.meeting_date) {
       return NextResponse.json(
         { error: "Meeting date is required" },
@@ -107,6 +108,7 @@ export async function POST(
       );
     }
 
+    // Create meeting
     const newMeeting = await prisma.meeting.create({
       data: {
         project_id: projectId,

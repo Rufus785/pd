@@ -2,13 +2,14 @@
 import { useSession } from "next-auth/react";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Spin, Tabs, Button, Result } from "antd";
+import { Typography, Spin, Tabs, Button, Result } from "antd";
 import ProjectHeader from "@/components/projects/ProjectHeader";
 import TaskSection from "@/components/projects/TaskSection";
 import WireframeSection from "@/components/projects/WireframeSection";
 import MeetingSection from "@/components/projects/MeetingSection";
 import type { Project, Task, Meeting, User } from "@/app/types/projectTypes";
 
+const { Title } = Typography;
 const { TabPane } = Tabs;
 
 export default function ProjectDetailPage() {
@@ -189,7 +190,6 @@ export default function ProjectDetailPage() {
     );
   }
 
-  // Check if user is PM or Admin
   const userRoles = session?.user?.roles || [];
   const isUserPM = userRoles.includes("PM") || userRoles.includes("Admin");
   const isUserDesigner = userRoles.includes("Designer") || isUserPM;

@@ -17,7 +17,7 @@ const { Title, Paragraph, Text } = Typography;
 interface WireframeSectionProps {
   projectId: number;
   wireframeLink: string | null | undefined;
-  isUserDesigner: boolean;
+  isUserDesigner: boolean; // Designer, PM i Admin mogą edytować makiety
   onWireframeUpdate: (url: string) => void;
 }
 
@@ -85,6 +85,7 @@ export default function WireframeSection({
           <Title level={4} style={{ margin: 0 }}>
             Makiety projektowe
           </Title>
+          {/* Tylko Designer, PM i Admin mogą edytować makiety */}
           {isUserDesigner && !editing && (
             <Button
               type="primary"

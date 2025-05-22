@@ -10,7 +10,6 @@ import {
   Input,
   Select,
   message,
-  Tooltip,
   Typography,
   Space,
 } from "antd";
@@ -41,6 +40,7 @@ export default function TaskSection({
   const [form] = Form.useForm();
   const [taskModalVisible, setTaskModalVisible] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [viewingTask, setViewingTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(false);
 
   const getPriorityColor = (priority: string) => {
@@ -208,9 +208,9 @@ export default function TaskSection({
       dataIndex: "title",
       key: "title",
       render: (text: string, record: Task) => (
-        <Tooltip title={record.description || "Brak opisu"}>
-          <span>{text}</span>
-        </Tooltip>
+        <Button type="link" onClick={() => setViewingTask(record)}>
+          {text}
+        </Button>
       ),
     },
     {
@@ -236,7 +236,7 @@ export default function TaskSection({
           value={status}
           style={{ width: 120 }}
           onChange={(value) => handleStatusChange(record.id, value)}
-          disabled={!isUserPM}
+          disabled={false}
         >
           <Option value="ToDo">
             <Tag color={getStatusColor("ToDo")}>ToDo</Tag>
@@ -338,7 +338,6 @@ export default function TaskSection({
         )}
       </Card>
 
-      {/* Task Form Modal */}
       <Modal
         title={editingTask ? "Edytuj zadanie" : "Dodaj nowe zadanie"}
         open={taskModalVisible}
@@ -401,6 +400,40 @@ export default function TaskSection({
             </Select>
           </Form.Item>
         </Form>
+      </Modal>
+
+      <Modal
+        title="Szczegóły zadania"
+        open={!!viewingTask}
+        onCancel={() => setViewingTask(null)}
+        footer={null}
+        width={600}
+      >
+        <Title level={5}>{viewingTask?.title}</Title>
+        <p>
+          <strong>Opis:</strong>
+        </p>
+        <Text>{viewingTask?.description || "Brak opisu"}</Text>
+
+        <p style={{ marginTop: 16 }}>
+          <strong>Status:</strong>{" "}
+          <Tag color={getStatusColor(viewingTask?.status || "")}>
+            {viewingTask?.status}
+          </Tag>
+        </p>
+
+        <p>
+          <strong>Priorytet:</strong>{" "}
+          <Tag color={getPriorityColor(viewingTask?.priority || "")}>
+            {viewingTask?.priority}
+          </Tag>
+        </p>
+
+        <p>
+          <strong>Przypisany do:</strong>{" "}
+          {users.find((u) => u.id === viewingTask?.user_id)?.nickname ||
+            "Nieznany użytkownik"}
+        </p>
       </Modal>
     </>
   );

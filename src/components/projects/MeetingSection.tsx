@@ -13,7 +13,7 @@ import {
   Avatar,
   Empty,
 } from "antd";
-import { Plus, Calendar } from "lucide-react";
+import { Plus, Calendar, CalendarX } from "lucide-react";
 import type { Meeting } from "@/app/types/projectTypes";
 
 const { Title, Text } = Typography;
@@ -113,8 +113,19 @@ export default function MeetingSection({
               <List.Item.Meta
                 avatar={
                   <Avatar
-                    icon={<Calendar />}
-                    style={{ backgroundColor: "#1890ff" }}
+                    icon={
+                      new Date(meeting.meeting_date) >= new Date() ? (
+                        <Calendar />
+                      ) : (
+                        <CalendarX />
+                      )
+                    }
+                    style={{
+                      backgroundColor:
+                        new Date(meeting.meeting_date) >= new Date()
+                          ? "#1890ff"
+                          : "#d9d9d9",
+                    }}
                   />
                 }
                 title={formatDate(meeting.meeting_date)}
@@ -143,6 +154,7 @@ export default function MeetingSection({
             <Title level={4} style={{ margin: 0 }}>
               Spotkania projektowe
             </Title>
+            {/* Tylko PM i Admin mogą dodawać spotkania */}
             {isUserPM && (
               <Button
                 type="primary"
@@ -165,6 +177,7 @@ export default function MeetingSection({
         )}
       </Card>
 
+      {/* Meeting Form Modal - tylko dla PM i Admin */}
       <Modal
         title="Zaplanuj nowe spotkanie"
         open={meetingModalVisible}

@@ -28,7 +28,6 @@ export async function PATCH(
                 members: {
                   where: {
                     user_id: Number(session.user.id),
-                    role: "PM",
                   },
                 },
               },
@@ -42,15 +41,14 @@ export async function PATCH(
       return NextResponse.json({ error: "Task not found" }, { status: 404 });
     }
 
-    const userRoles = session.user.roles || [];
-    const isPMorAdmin = userRoles.includes("PM") || userRoles.includes("Admin");
-    const isProjectPM = task.project.teams.some(
+    const hasAccess = task.project.teams.some(
       (team) => team.members.length > 0
     );
+    const isAdmin = session.user.roles?.includes("Admin");
 
-    if (!isPMorAdmin && !isProjectPM) {
+    if (!hasAccess && !isAdmin) {
       return NextResponse.json(
-        { error: "Only Project Managers can update task status" },
+        { error: "You don't have access to this task" },
         { status: 403 }
       );
     }
