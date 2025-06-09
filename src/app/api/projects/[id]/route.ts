@@ -3,6 +3,12 @@ import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
+enum ProjectStatus {
+  Active = "Active",
+  Archived = "Archived",
+  Closed = "Closed",
+}
+
 export async function GET(
   req: Request,
   { params }: { params: { id: string } }
@@ -21,7 +27,7 @@ export async function GET(
       );
     }
 
-    const project = await prisma.project.findUnique({
+    let project = await prisma.project.findUnique({
       where: { id: projectId },
       include: {
         teams: {
@@ -50,6 +56,28 @@ export async function GET(
         { error: "You don't have access to this project" },
         { status: 403 }
       );
+    }
+
+    if (
+      project.status === ProjectStatus.Active &&
+      project.subscription_end &&
+      new Date(project.subscription_end) < new Date()
+    ) {
+      project = await prisma.project.update({
+        where: { id: projectId },
+        data: { status: ProjectStatus.Archived },
+        include: {
+          teams: {
+            include: {
+              members: {
+                where: {
+                  user_id: Number(session.user.id),
+                },
+              },
+            },
+          },
+        },
+      });
     }
 
     return NextResponse.json(project);

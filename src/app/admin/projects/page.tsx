@@ -61,7 +61,6 @@ export default function AdminProjects() {
       }
       const data = await response.json();
 
-      // Check for expired subscriptions and update statuses
       const updatedProjects = await checkAndUpdateExpiredProjects(data);
       setProjects(updatedProjects);
     } catch (error) {
@@ -74,41 +73,17 @@ export default function AdminProjects() {
 
   const checkAndUpdateExpiredProjects = async (projectsList: Project[]) => {
     const currentDate = new Date();
-    const projectsToUpdate = projectsList.filter(
-      (project) =>
+
+    return projectsList.map((project) => {
+      if (
         project.status === "Active" &&
         project.subscription_end &&
         new Date(project.subscription_end) < currentDate
-    );
-
-    if (projectsToUpdate.length === 0) {
-      return projectsList;
-    }
-
-    // Update projects with expired subscriptions
-    for (const project of projectsToUpdate) {
-      try {
-        const response = await fetch(`/api/auth/projects/${project.id}`, {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ status: "Archived" }),
-        });
-
-        if (response.ok) {
-          // Update the project status in the local list
-          project.status = "Archived";
-          message.info(
-            `Projekt "${project.name}" został automatycznie zarchiwizowany z powodu wygaśnięcia subskrypcji.`
-          );
-        }
-      } catch (error) {
-        console.error(`Error updating project ${project.id}:`, error);
+      ) {
+        return { ...project, status: "Archived" };
       }
-    }
-
-    return projectsList;
+      return project;
+    });
   };
 
   const handleAddProject = () => {

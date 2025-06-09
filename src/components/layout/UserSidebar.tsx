@@ -232,11 +232,6 @@ export function UserSidebar() {
 
   const footerMenuItems = [
     {
-      key: "/settings",
-      icon: <Settings size={18} />,
-      label: <Link href="/settings">Ustawienia</Link>,
-    },
-    {
       key: "/",
       icon: <Home size={18} />,
       label: <Link href="/">Strona główna</Link>,

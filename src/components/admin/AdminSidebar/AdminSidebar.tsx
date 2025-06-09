@@ -60,11 +60,6 @@ export function AdminSidebar() {
 
   const footerMenuItems = [
     {
-      key: "/admin/settings",
-      icon: <Settings size={18} />,
-      label: <Link href="/admin/settings">Ustawienia</Link>,
-    },
-    {
       key: "/",
       icon: <Home size={18} />,
       label: <Link href="/">Strona główna</Link>,
