@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/authOptions";
 
 enum ProjectStatus {
   Active = "Active",
@@ -9,17 +9,20 @@ enum ProjectStatus {
   Closed = "Closed",
 }
 
-export async function GET(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+function getProjectIdFromUrl(req: Request) {
+  const pathname = new URL(req.url).pathname;
+  const segments = pathname.split("/");
+  return segments[3];
+}
+
+export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const projectId = Number(params.id);
+    const projectId = Number(getProjectIdFromUrl(req));
     if (isNaN(projectId)) {
       return NextResponse.json(
         { error: "Invalid project ID" },
@@ -47,7 +50,7 @@ export async function GET(
     }
 
     const hasAccess = project.teams.some(
-      (team: { members: string | any[] }) => team.members.length > 0
+      (team: { members: any[] }) => team.members.length > 0
     );
     const isAdmin = session.user.roles?.includes("Admin");
 

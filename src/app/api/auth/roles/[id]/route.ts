@@ -2,12 +2,15 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+function getIdFromUrl(request: Request) {
+  const pathname = new URL(request.url).pathname;
+  const segments = pathname.split("/");
+  return segments[segments.length - 1];
+}
+
+export async function GET(request: Request) {
   try {
-    const id = Number.parseInt(params.id);
+    const id = Number.parseInt(getIdFromUrl(request));
     if (isNaN(id)) {
       return NextResponse.json(
         { error: "Nieprawidłowy ID roli" },
@@ -19,9 +22,7 @@ export async function GET(
       where: { id },
       include: {
         users: {
-          include: {
-            user: true,
-          },
+          include: { user: true },
         },
       },
     });
@@ -48,12 +49,9 @@ export async function GET(
   }
 }
 
-export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(request: Request) {
   try {
-    const id = Number.parseInt(params.id);
+    const id = Number.parseInt(getIdFromUrl(request));
     if (isNaN(id)) {
       return NextResponse.json(
         { error: "Nieprawidłowy ID roli" },
@@ -69,26 +67,16 @@ export async function PUT(
     }
 
     const role = await prisma.$transaction(async (tx) => {
-      const existingRole = await tx.role.findUnique({
-        where: { id },
-      });
+      const existingRole = await tx.role.findUnique({ where: { id } });
+      if (!existingRole) throw new Error("NOT_FOUND");
 
-      if (!existingRole) {
-        throw new Error("NOT_FOUND");
-      }
-
-      await tx.role.update({
-        where: { id },
-        data: updateData,
-      });
+      await tx.role.update({ where: { id }, data: updateData });
 
       return tx.role.findUnique({
         where: { id },
         include: {
           users: {
-            include: {
-              user: true,
-            },
+            include: { user: true },
           },
         },
       });
@@ -133,12 +121,9 @@ export async function PUT(
   }
 }
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: Request) {
   try {
-    const id = Number.parseInt(params.id);
+    const id = Number.parseInt(getIdFromUrl(request));
     if (isNaN(id)) {
       return NextResponse.json(
         { error: "Nieprawidłowy ID roli" },
@@ -147,26 +132,14 @@ export async function DELETE(
     }
 
     await prisma.$transaction(async (tx) => {
-      const existingRole = await tx.role.findUnique({
-        where: { id },
-      });
+      const existingRole = await tx.role.findUnique({ where: { id } });
+      if (!existingRole) throw new Error("NOT_FOUND");
 
-      if (!existingRole) {
-        throw new Error("NOT_FOUND");
-      }
-
-      await tx.roleUser.deleteMany({
-        where: { id_role: id },
-      });
-
-      await tx.role.delete({
-        where: { id },
-      });
+      await tx.roleUser.deleteMany({ where: { id_role: id } });
+      await tx.role.delete({ where: { id } });
     });
 
-    return NextResponse.json({
-      message: "Rola została pomyślnie usunięta",
-    });
+    return NextResponse.json({ message: "Rola została pomyślnie usunięta" });
   } catch (error) {
     if (error instanceof Error && error.message === "NOT_FOUND") {
       return NextResponse.json(

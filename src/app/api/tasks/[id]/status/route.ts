@@ -1,19 +1,22 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/authOptions";
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+function getTaskIdFromUrl(req: Request) {
+  const pathname = new URL(req.url).pathname;
+  const segments = pathname.split("/");
+  return segments[3];
+}
+
+export async function PATCH(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const taskId = Number(params.id);
+    const taskId = Number(getTaskIdFromUrl(req));
     if (isNaN(taskId)) {
       return NextResponse.json({ error: "Invalid task ID" }, { status: 400 });
     }

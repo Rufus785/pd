@@ -3,11 +3,14 @@ import prisma from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { hash } from "bcrypt";
 
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
-  const id = Number.parseInt(params.id);
+function getIdFromUrl(request: Request) {
+  const pathname = new URL(request.url).pathname;
+  const segments = pathname.split("/");
+  return segments[segments.length - 1];
+}
+
+export async function GET(request: Request) {
+  const id = Number.parseInt(getIdFromUrl(request));
   if (isNaN(id)) {
     return NextResponse.json(
       { error: "Nieprawidłowy ID użytkownika" },
@@ -44,11 +47,8 @@ export async function GET(
   });
 }
 
-export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
-  const id = Number.parseInt(params.id);
+export async function PUT(request: Request) {
+  const id = Number.parseInt(getIdFromUrl(request));
   if (isNaN(id)) {
     return NextResponse.json(
       { error: "Nieprawidłowy ID użytkownika" },
@@ -88,14 +88,11 @@ export async function PUT(
     }
   });
 
-  return GET(request, { params });
+  return GET(request);
 }
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
-  const id = Number.parseInt(params.id);
+export async function DELETE(request: Request) {
+  const id = Number.parseInt(getIdFromUrl(request));
   if (isNaN(id)) {
     return NextResponse.json(
       { error: "Nieprawidłowy ID użytkownika" },

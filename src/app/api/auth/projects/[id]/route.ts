@@ -2,12 +2,16 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+function getIdFromUrl(request: Request) {
+  const pathname = new URL(request.url).pathname;
+  const segments = pathname.split("/");
+  return segments[segments.length - 1];
+}
+
+export async function GET(request: Request) {
   try {
-    const id = Number.parseInt(params.id);
+    const idStr = getIdFromUrl(request);
+    const id = Number.parseInt(idStr);
     if (isNaN(id)) {
       return NextResponse.json(
         { error: "Nieprawidłowy ID projektu" },
@@ -62,12 +66,10 @@ export async function GET(
   }
 }
 
-export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(request: Request) {
   try {
-    const id = Number.parseInt(params.id);
+    const idStr = getIdFromUrl(request);
+    const id = Number.parseInt(idStr);
     if (isNaN(id)) {
       return NextResponse.json(
         { error: "Nieprawidłowy ID projektu" },
@@ -156,12 +158,10 @@ export async function PUT(
   }
 }
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: Request) {
   try {
-    const id = Number.parseInt(params.id);
+    const idStr = getIdFromUrl(request);
+    const id = Number.parseInt(idStr);
     if (isNaN(id)) {
       return NextResponse.json(
         { error: "Nieprawidłowy ID projektu" },

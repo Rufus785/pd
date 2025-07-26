@@ -8,11 +8,14 @@ interface TeamMember {
   role: TeamRole;
 }
 
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
-  const id = Number.parseInt(params.id);
+function getTeamIdFromUrl(request: Request) {
+  const pathname = new URL(request.url).pathname;
+  const segments = pathname.split("/");
+  return segments[3];
+}
+
+export async function GET(request: Request) {
+  const id = Number.parseInt(getTeamIdFromUrl(request));
   if (isNaN(id)) {
     return NextResponse.json(
       { error: "Nieprawidłowy ID zespołu" },
@@ -39,7 +42,6 @@ export async function GET(
       );
     }
 
-    // Transform the data to match the expected format
     const members: TeamMember[] = team.members.map((userTeam) => ({
       user_id: userTeam.user.id,
       nickname: userTeam.user.nickname,
