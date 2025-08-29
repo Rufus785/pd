@@ -126,3 +126,8 @@ enum TeamRole {
   Developer
 }
 
+generator erd {
+  provider = "prisma-erd-generator"
+  output = "./erd.png"
+  layout = "LR"
+}

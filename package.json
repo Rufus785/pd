@@ -28,6 +28,7 @@
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
+    "@mermaid-js/mermaid-cli": "^11.9.0",
     "@shadcn/ui": "^0.0.4",
     "@types/bcrypt": "^5.0.2",
     "@types/node": "^20",
@@ -37,6 +38,7 @@
     "autoprefixer": "^10.4.21",
     "postcss": "^8.5.3",
     "prisma": "^6.4.1",
+    "prisma-erd-generator": "^2.0.4",
     "tailwindcss": "^4.0.14",
     "typescript": "^5"
   }
