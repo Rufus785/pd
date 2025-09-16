@@ -32,6 +32,12 @@ model RoleUser {
 
   @@id([id_user, id_role]) 
 }
+enum RoleEnum {
+  PM
+  Designer
+  Developer
+  Admin
+}
 
 model Project {
   id               Int       @id @default(autoincrement())
@@ -88,12 +94,7 @@ model UserTeam {
   @@id([team_id, user_id])
 }
 
-enum RoleEnum {
-  PM
-  Designer
-  Developer
-  Admin
-}
+
 
 enum ProjectStatus {
   Active

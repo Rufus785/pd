@@ -10,17 +10,9 @@ export default function DisplayIfAdmin({
 }>) {
   const { data: session, status } = useSession();
 
-  if (status === "loading") {
-    return <p>Loading...</p>;
-  }
-
-  if (status === "unauthenticated") {
-    return null;
-  }
-
-  if (adminOnly && !session?.user?.roles?.includes("Admin")) {
-    return null;
-  }
+  if (status === "loading") return null;
+  if (status === "unauthenticated") return null;
+  if (adminOnly && !session?.user?.roles?.includes("Admin")) return null;
 
   return <>{children}</>;
 }
