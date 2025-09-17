@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = env("DATABASE_URL")
+  url      = "file:./dev.db"
 }
 
 model User {
@@ -51,15 +51,6 @@ model Project {
   teams            Team[]
 }
 
-model Meeting {
-  id          Int      @id @default(autoincrement())
-  project_id  Int
-  meeting_date DateTime
-  description String?
-  
-  project     Project  @relation(fields: [project_id], references: [id])
-}
-
 model Task {
   id          Int       @id @default(autoincrement())
   project_id  Int
@@ -72,7 +63,28 @@ model Task {
   project     Project   @relation(fields: [project_id], references: [id])
   user        User      @relation(fields: [user_id], references: [id])
 }
+enum Priority {
+  Low
+  Medium
+  High
+}
 
+enum TaskStatus {
+  ToDo
+  InProgress
+  CodeReview
+  Deprecated
+  Done
+}
+
+model Meeting {
+  id          Int      @id @default(autoincrement())
+  project_id  Int
+  meeting_date DateTime
+  description String?
+  
+  project     Project  @relation(fields: [project_id], references: [id])
+}
 model Team {
   id         Int        @id @default(autoincrement())
   project_id Int?
@@ -107,19 +119,7 @@ enum PaymentStatus {
   Unpaid
 }
 
-enum Priority {
-  Low
-  Medium
-  High
-}
 
-enum TaskStatus {
-  ToDo
-  InProgress
-  CodeReview
-  Deprecated
-  Done
-}
 
 enum TeamRole {
   PM
