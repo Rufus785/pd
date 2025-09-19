@@ -1,20 +1,22 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Card,
   Table,
   Tag,
   Button,
-  Modal,
   Form,
   Input,
   Select,
   message,
   Typography,
   Space,
+  Popconfirm,
+  Modal,
 } from "antd";
 import { Plus, Edit, Trash2 } from "lucide-react";
 import type { Task, User } from "@/app/types/projectTypes";
+import { useRouter } from "next/navigation";
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -27,6 +29,7 @@ interface TaskSectionProps {
   isUserPM: boolean;
   onTaskUpdate: (task: Task) => void;
   onTaskCreate: (task: Task) => void;
+  onTasksReplace?: (tasks: Task[]) => void; // opcjonalne – gdy rodzic trzyma stan listy
 }
 
 export default function TaskSection({
@@ -36,12 +39,20 @@ export default function TaskSection({
   isUserPM,
   onTaskUpdate,
   onTaskCreate,
+  onTasksReplace,
 }: TaskSectionProps) {
+  const router = useRouter();
   const [form] = Form.useForm();
   const [taskModalVisible, setTaskModalVisible] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [viewingTask, setViewingTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // 🔹 Lokalny mirror listy (renderujemy z niego)
+  const [list, setList] = useState<Task[]>(tasks);
+  useEffect(() => {
+    setList(tasks);
+  }, [tasks]);
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -91,6 +102,43 @@ export default function TaskSection({
     setTaskModalVisible(true);
   };
 
+  const fetchTasks = async (): Promise<Task[]> => {
+    const res = await fetch(`/api/projects/${projectId}/tasks`, {
+      method: "GET",
+      cache: "no-store",
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(text || "Failed to fetch tasks");
+    }
+    return res.json();
+  };
+
+  const deleteTask = async (taskId: number) => {
+    try {
+      const res = await fetch(`/api/tasks/${taskId}`, { method: "DELETE" });
+      if (!res.ok) {
+        const text = await res.text();
+        try {
+          throw new Error(JSON.parse(text)?.error || "Failed to delete task");
+        } catch {
+          throw new Error(text || "Failed to delete task");
+        }
+      }
+
+      // 🔹 Po udanym DELETE – pobierz świeżą listę i ustaw lokalnie
+      const fresh = await fetchTasks();
+      setList(fresh);
+      // …i jeśli rodzic chce, podmień też u niego
+      onTasksReplace?.(fresh);
+
+      message.success("Zadanie usunięte pomyślnie");
+    } catch (e: any) {
+      console.error("Error deleting task:", e);
+      message.error(`Błąd usuwania: ${e?.message || e}`);
+    }
+  };
+
   const handleTaskSubmit = async () => {
     try {
       const values = await form.validateFields();
@@ -108,35 +156,33 @@ export default function TaskSection({
       if (editingTask) {
         const response = await fetch(`/api/tasks/${editingTask.id}`, {
           method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(taskData),
         });
+        if (!response.ok) throw new Error("Failed to update task");
+        const updatedTask: Task = await response.json();
 
-        if (!response.ok) {
-          throw new Error("Failed to update task");
-        }
-
-        const updatedTask = await response.json();
-        message.success("Zadanie zaktualizowane pomyślnie");
+        // 🔹 Aktualizuj lokalnie + daj znać rodzicowi
+        setList((prev) =>
+          prev.map((t) => (t.id === updatedTask.id ? updatedTask : t))
+        );
         onTaskUpdate(updatedTask);
+
+        message.success("Zadanie zaktualizowane pomyślnie");
       } else {
         const response = await fetch(`/api/projects/${projectId}/tasks`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(taskData),
         });
+        if (!response.ok) throw new Error("Failed to create task");
+        const newTask: Task = await response.json();
 
-        if (!response.ok) {
-          throw new Error("Failed to create task");
-        }
-
-        const newTask = await response.json();
-        message.success("Zadanie utworzone pomyślnie");
+        // 🔹 Aktualizuj lokalnie + daj znać rodzicowi
+        setList((prev) => [newTask, ...prev]);
         onTaskCreate(newTask);
+
+        message.success("Zadanie utworzone pomyślnie");
       }
 
       setTaskModalVisible(false);
@@ -148,54 +194,23 @@ export default function TaskSection({
     }
   };
 
-  const handleDeleteTask = async (taskId: number) => {
-    Modal.confirm({
-      title: "Potwierdź usunięcie",
-      content: "Czy na pewno chcesz usunąć to zadanie?",
-      onOk: async () => {
-        try {
-          const response = await fetch(`/api/tasks/${taskId}`, {
-            method: "DELETE",
-          });
-
-          if (!response.ok) {
-            throw new Error("Failed to delete task");
-          }
-
-          message.success("Zadanie usunięte pomyślnie");
-          const updatedTasks = tasks.filter((task) => task.id !== taskId);
-          onTaskUpdate({
-            ...tasks.find((task) => task.id === taskId)!,
-            id: -1,
-          });
-        } catch (error) {
-          console.error("Error deleting task:", error);
-          message.error("Wystąpił błąd podczas usuwania zadania");
-        }
-      },
-    });
-  };
-
   const handleStatusChange = async (taskId: number, newStatus: string) => {
     try {
-      const task = tasks.find((t) => t.id === taskId);
-      if (!task) return;
-
       const response = await fetch(`/api/tasks/${taskId}/status`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
       });
+      if (!response.ok) throw new Error("Failed to update task status");
+      const updatedTask: Task = await response.json();
 
-      if (!response.ok) {
-        throw new Error("Failed to update task status");
-      }
-
-      const updatedTask = await response.json();
-      message.success(`Status zadania zmieniony na ${newStatus}`);
+      // 🔹 Aktualizuj lokalnie + daj znać rodzicowi
+      setList((prev) =>
+        prev.map((t) => (t.id === updatedTask.id ? updatedTask : t))
+      );
       onTaskUpdate(updatedTask);
+
+      message.success(`Status zadania zmieniony na ${newStatus}`);
     } catch (error) {
       console.error("Error updating task status:", error);
       message.error("Wystąpił błąd podczas aktualizacji statusu zadania");
@@ -234,9 +249,9 @@ export default function TaskSection({
       render: (status: string, record: Task) => (
         <Select
           value={status}
-          style={{ width: 120 }}
+          style={{ width: 140 }}
           onChange={(value) => handleStatusChange(record.id, value)}
-          disabled={false}
+          disabled={!isUserPM}
         >
           <Option value="ToDo">
             <Tag color={getStatusColor("ToDo")}>ToDo</Tag>
@@ -283,14 +298,25 @@ export default function TaskSection({
               <Button
                 icon={<Edit size={16} />}
                 size="small"
-                onClick={() => showEditTaskModal(record)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  showEditTaskModal(record);
+                }}
               />
-              <Button
-                icon={<Trash2 size={16} />}
-                size="small"
-                danger
-                onClick={() => handleDeleteTask(record.id)}
-              />
+              <Popconfirm
+                title="Potwierdź usunięcie"
+                description="Czy na pewno chcesz usunąć to zadanie?"
+                okText="Usuń"
+                cancelText="Anuluj"
+                onConfirm={() => deleteTask(record.id)}
+              >
+                <Button
+                  icon={<Trash2 size={16} />}
+                  size="small"
+                  danger
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </Popconfirm>
             </>
           )}
         </Space>
@@ -324,9 +350,9 @@ export default function TaskSection({
           </div>
         }
       >
-        {tasks.length > 0 ? (
+        {list.length > 0 ? (
           <Table
-            dataSource={tasks}
+            dataSource={list}
             columns={columns}
             rowKey="id"
             pagination={{ pageSize: 10 }}

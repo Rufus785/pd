@@ -47,13 +47,6 @@ export default function AdminPage() {
       link: "/admin/roles",
       color: "#eb2f96",
     },
-    {
-      title: "Ustawienia",
-      icon: <Settings size={36} />,
-      description: "Zarzadzaj ustawieniami",
-      link: "/admin/settings",
-      color: "#13c2c2",
-    },
   ];
 
   if (status === "loading") {
