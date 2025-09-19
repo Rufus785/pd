@@ -1,26 +1,22 @@
 // src/app/api/tasks/[id]/route.ts
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 
-// PUT /api/tasks/:id  — edycja zadania
-export async function PUT(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+// PUT /api/tasks/:id — edycja (z walidacją assignee w ramach projektu)
+export async function PUT(req: Request, ctx: any) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) {
+    if (!session)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
 
-    const taskId = Number(params.id);
+    const { id } = ctx?.params ?? {};
+    const taskId = Number(id);
     if (!Number.isFinite(taskId)) {
       return NextResponse.json({ error: "Invalid task ID" }, { status: 400 });
     }
 
-    // Pobierz task wraz z projektem i PM-ami usera w tym projekcie
     const task = await prisma.task.findUnique({
       where: { id: taskId },
       include: {
@@ -37,15 +33,12 @@ export async function PUT(
         },
       },
     });
-
-    if (!task) {
+    if (!task)
       return NextResponse.json({ error: "Task not found" }, { status: 404 });
-    }
 
     const roles = session.user.roles || [];
     const isPMorAdmin = roles.includes("PM") || roles.includes("Admin");
     const isProjectPM = task.project.teams.some((t) => t.members.length > 0);
-
     if (!isPMorAdmin && !isProjectPM) {
       return NextResponse.json(
         { error: "Only Project Managers can update tasks" },
@@ -54,7 +47,6 @@ export async function PUT(
     }
 
     const data = await req.json();
-
     if (!data.title || !data.priority || !data.status || !data.user_id) {
       return NextResponse.json(
         { error: "Missing required fields" },
@@ -62,14 +54,13 @@ export async function PUT(
       );
     }
 
-    // 🔒 Walidacja: przypisywany user musi należeć do zespołu *tego projektu*
-    const assigneeCount = await prisma.userTeam.count({
+    // Walidacja: user musi należeć do teamu przypisanego do TEGO projektu
+    const assigneeCount = await prisma.team.count({
       where: {
-        user_id: Number(data.user_id),
-        team: { project_id: task.project_id },
+        project_id: task.project_id,
+        members: { some: { user_id: Number(data.user_id) } },
       },
     });
-
     if (assigneeCount === 0) {
       return NextResponse.json(
         { error: "Assignee must belong to a team assigned to this project" },
@@ -98,18 +89,15 @@ export async function PUT(
   }
 }
 
-// DELETE /api/tasks/:id  — usuwanie zadania
-export async function DELETE(
-  _req: Request,
-  { params }: { params: { id: string } }
-) {
+// DELETE /api/tasks/:id
+export async function DELETE(_req: Request, ctx: any) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) {
+    if (!session)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
 
-    const taskId = Number(params.id);
+    const { id } = ctx?.params ?? {};
+    const taskId = Number(id);
     if (!Number.isFinite(taskId)) {
       return NextResponse.json({ error: "Invalid task ID" }, { status: 400 });
     }
@@ -130,15 +118,12 @@ export async function DELETE(
         },
       },
     });
-
-    if (!task) {
+    if (!task)
       return NextResponse.json({ error: "Task not found" }, { status: 404 });
-    }
 
     const roles = session.user.roles || [];
     const isPMorAdmin = roles.includes("PM") || roles.includes("Admin");
     const isProjectPM = task.project.teams.some((t) => t.members.length > 0);
-
     if (!isPMorAdmin && !isProjectPM) {
       return NextResponse.json(
         { error: "Only Project Managers can delete tasks" },
