@@ -1,10 +1,8 @@
-// src/app/api/tasks/[id]/route.ts
 import { NextResponse, NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 
-// PUT /api/tasks/:id — edycja (z walidacją assignee w ramach projektu)
 export async function PUT(req: Request, ctx: any) {
   try {
     const session = await getServerSession(authOptions);
@@ -54,7 +52,6 @@ export async function PUT(req: Request, ctx: any) {
       );
     }
 
-    // Walidacja: user musi należeć do teamu przypisanego do TEGO projektu
     const assigneeCount = await prisma.team.count({
       where: {
         project_id: task.project_id,
@@ -89,7 +86,6 @@ export async function PUT(req: Request, ctx: any) {
   }
 }
 
-// DELETE /api/tasks/:id
 export async function DELETE(_req: Request, ctx: any) {
   try {
     const session = await getServerSession(authOptions);

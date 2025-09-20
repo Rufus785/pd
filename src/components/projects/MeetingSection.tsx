@@ -61,7 +61,7 @@ export default function MeetingSection({
       });
 
       if (!response.ok) {
-        throw new Error("Failed to create meeting");
+        throw new Error("Blad podczas odswiezania spotkan");
       }
 
       const newMeeting = await response.json();
@@ -69,7 +69,7 @@ export default function MeetingSection({
       onMeetingCreate(newMeeting);
       setMeetingModalVisible(false);
     } catch (error) {
-      console.error("Error creating meeting:", error);
+      console.error("Error podczas tworzenia spotkania:", error);
       message.error("Wystąpił błąd podczas tworzenia spotkania");
     } finally {
       setLoading(false);
@@ -177,7 +177,6 @@ export default function MeetingSection({
         )}
       </Card>
 
-      {/* Meeting Form Modal - tylko dla PM i Admin */}
       <Modal
         title="Zaplanuj nowe spotkanie"
         open={meetingModalVisible}

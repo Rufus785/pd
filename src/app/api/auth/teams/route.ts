@@ -1,25 +1,22 @@
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
-// Get all teams
 export async function GET(request: Request) {
   try {
-    // Step 1: Fetch all teams with their members and user details
     const teams = await prisma.team.findMany({
       include: {
-        project: true, // Still include project for display purposes
+        project: true,
         members: {
           include: {
-            user: true, // Include user details for each member
+            user: true,
           },
         },
       },
     });
 
-    // Step 2: Transform data to match what the frontend expects
     const formattedTeams = teams.map((team) => ({
       id: team.id,
-      name: team.team_name, // Convert team_name to name for frontend
+      name: team.team_name,
       project_id: team.project_id,
       project_name: team.project?.name || "Brak projektu",
       project_status: team.project?.status || "Brak projektu",
@@ -37,19 +34,16 @@ export async function GET(request: Request) {
   }
 }
 
-// Create a new team
 export async function POST(request: Request) {
   try {
     const data = await request.json();
 
-    // Step 1: Create the team with just the name
     const team = await prisma.team.create({
       data: {
-        team_name: data.name, // Convert name to team_name
+        team_name: data.name,
       },
     });
 
-    // Step 2: Create team members if provided
     if (data.members && data.members.length > 0) {
       for (const member of data.members) {
         await prisma.userTeam.create({
@@ -62,7 +56,6 @@ export async function POST(request: Request) {
       }
     }
 
-    // Step 3: Return the created team
     return Response.json({
       id: team.id,
       name: team.team_name,

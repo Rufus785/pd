@@ -45,7 +45,7 @@ export default function ProjectGrid() {
 
       const userResponse = await fetch(`/api/auth/user/${session?.user?.id}`);
       if (!userResponse.ok) {
-        throw new Error("Failed to fetch user data");
+        throw new Error("Nie udalo sie odswiezyc danych uzytkownika");
       }
 
       const userData = await userResponse.json();
@@ -70,7 +70,7 @@ export default function ProjectGrid() {
 
       const projectsResponse = await fetch(`/api/projects`);
       if (!projectsResponse.ok) {
-        throw new Error("Failed to fetch projects");
+        throw new Error("Nie udalo sie odwiezyc projektow!");
       }
 
       const allProjects = await projectsResponse.json();

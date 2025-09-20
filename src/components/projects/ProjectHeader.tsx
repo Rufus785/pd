@@ -73,14 +73,14 @@ export default function ProjectHeader({
       });
 
       if (!response.ok) {
-        throw new Error("Failed to update project status");
+        throw new Error("Nie udalo sie zaktualizowac statusu projektu");
       }
 
       message.success(`Status projektu zmieniony na ${selectedStatus}`);
       onStatusChange(selectedStatus);
       setStatusModalVisible(false);
     } catch (error) {
-      console.error("Error updating project status:", error);
+      console.error("Error podczas aktualizacji statusu projektu:", error);
       message.error("Wystąpił błąd podczas aktualizacji statusu projektu");
     } finally {
       setLoading(false);
@@ -100,14 +100,14 @@ export default function ProjectHeader({
       });
 
       if (!response.ok) {
-        throw new Error("Failed to update payment status");
+        throw new Error("Nie udalo sie zaktualizowac statusu platnosci");
       }
 
       message.success(`Status płatności zmieniony na ${selectedPaymentStatus}`);
       project.payment_status = selectedPaymentStatus as any;
       setPaymentModalVisible(false);
     } catch (error) {
-      console.error("Error updating payment status:", error);
+      console.error("Error podczas aktualizacji statusu platnosci:", error);
       message.error("Wystąpił błąd podczas aktualizacji statusu płatności");
     } finally {
       setLoading(false);

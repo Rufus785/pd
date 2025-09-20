@@ -29,7 +29,7 @@ interface TaskSectionProps {
   isUserPM: boolean;
   onTaskUpdate: (task: Task) => void;
   onTaskCreate: (task: Task) => void;
-  onTasksReplace?: (tasks: Task[]) => void; // opcjonalne – gdy rodzic trzyma stan listy
+  onTasksReplace?: (tasks: Task[]) => void;
 }
 
 export default function TaskSection({
@@ -48,7 +48,6 @@ export default function TaskSection({
   const [viewingTask, setViewingTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // 🔹 Lokalny mirror listy (renderujemy z niego)
   const [list, setList] = useState<Task[]>(tasks);
   useEffect(() => {
     setList(tasks);
@@ -126,10 +125,8 @@ export default function TaskSection({
         }
       }
 
-      // 🔹 Po udanym DELETE – pobierz świeżą listę i ustaw lokalnie
       const fresh = await fetchTasks();
       setList(fresh);
-      // …i jeśli rodzic chce, podmień też u niego
       onTasksReplace?.(fresh);
 
       message.success("Zadanie usunięte pomyślnie");
@@ -162,7 +159,6 @@ export default function TaskSection({
         if (!response.ok) throw new Error("Failed to update task");
         const updatedTask: Task = await response.json();
 
-        // 🔹 Aktualizuj lokalnie + daj znać rodzicowi
         setList((prev) =>
           prev.map((t) => (t.id === updatedTask.id ? updatedTask : t))
         );
@@ -178,7 +174,6 @@ export default function TaskSection({
         if (!response.ok) throw new Error("Failed to create task");
         const newTask: Task = await response.json();
 
-        // 🔹 Aktualizuj lokalnie + daj znać rodzicowi
         setList((prev) => [newTask, ...prev]);
         onTaskCreate(newTask);
 
@@ -204,7 +199,6 @@ export default function TaskSection({
       if (!response.ok) throw new Error("Failed to update task status");
       const updatedTask: Task = await response.json();
 
-      // 🔹 Aktualizuj lokalnie + daj znać rodzicowi
       setList((prev) =>
         prev.map((t) => (t.id === updatedTask.id ? updatedTask : t))
       );

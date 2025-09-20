@@ -3,18 +3,25 @@ import { SessionProvider, useSession } from "next-auth/react";
 import type React from "react";
 import { usePathname } from "next/navigation";
 import { UserSidebar } from "@/components/layout/UserSidebar";
+import {
+  SidebarVisibilityProvider,
+  useSidebarVisibility,
+} from "@/components/layout/SidebarVisibilityContext";
 
 function InnerLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { data: session, status } = useSession();
   const isAuthenticated = !!session && status === "authenticated";
   const isAdminPage = pathname.startsWith("/admin");
+
+  const { hidden } = useSidebarVisibility();
+
+  const showSidebar = isAuthenticated && !isAdminPage && !hidden;
+
   return (
     <>
-      {isAuthenticated && !isAdminPage && <UserSidebar />}
-      <div style={{ marginLeft: isAuthenticated && !isAdminPage ? 250 : 0 }}>
-        {children}
-      </div>
+      {showSidebar && <UserSidebar />}
+      <div style={{ marginLeft: showSidebar ? 250 : 0 }}>{children}</div>
     </>
   );
 }
@@ -28,7 +35,9 @@ export default function ClientLayout({
     <html>
       <body>
         <SessionProvider>
-          <InnerLayout>{children}</InnerLayout>
+          <SidebarVisibilityProvider>
+            <InnerLayout>{children}</InnerLayout>
+          </SidebarVisibilityProvider>
         </SessionProvider>
       </body>
     </html>
